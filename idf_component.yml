@@ -1,0 +1,7 @@
+version: "2.4.0"
+description: "OxeBots fork of sTune - Open loop PID autotuner using a novel s-curve inflection point test method."
+url: "https://github.com/OxeBots/sTune.git"
+repository: "https://github.com/OxeBots/sTune.git"
+license: "MIT"
+dependencies:
+  idf: ">=5.0"

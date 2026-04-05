@@ -1,6 +1,59 @@
-# sTune    [![arduino-library-badge](https://www.ardu-badge.com/badge/sTune.svg?)](https://www.ardu-badge.com/sTune) [![PlatformIO Registry](https://badges.registry.platformio.org/packages/dlloydev/library/sTune.svg)](https://registry.platformio.org/packages/libraries/dlloydev/sTune)
+# sTune (OxeBots ESP-IDF Port)
 
-This is an open loop PID autotuner using a novel s-curve inflection point test method. Tuning parameters are typically determined in about ½Tau on a first-order system with time delay. Full 5Tau testing and multiple serial output options are provided. See [**WiKi**](https://github.com/Dlloydev/sTune/wiki) for test results and more.
+> **Fork maintained by the OxeBots team**  
+> Repository: https://github.com/OxeBots/sTune.git  
+> Original library by David Lloyd: https://github.com/Dlloydev/sTune
+
+sTune is a PID autotuner for ESP32. It was adapted from the Arduino sTune library by removing Arduino-specific code and replacing it with ESP-IDF equivalents.
+
+## What changed from the original
+
+- Removed Arduino dependencies (`Arduino.h`, `micros()`, etc.)
+- Replaced Arduino timing with ESP-IDF `esp_timer`
+- Added `CMakeLists.txt` for ESP-IDF builds
+- Kept all tuning features: inflection point method, 5Tau testing, serial output
+
+## How to use
+
+Add this component to your project's `components/` folder and include the header:
+
+```c
+#include "sTune.h"
+```
+
+Create an autotuner:
+
+```c
+float input, output;
+sTune tuner(&input, &output, sTune::ZN_PID, sTune::directIP, sTune::printALL);
+```
+
+Configure the tuner:
+
+```c
+tuner.Configure(200, 255, 0, 50, 10, 5, 300);
+```
+
+Run it in your loop:
+
+```c
+if (tuner.Run() == sTune::tunings) {
+    float Kp, Ki, Kd;
+    tuner.GetAutoTunings(&Kp, &Ki, &Kd);
+    // Apply Kp, Ki, Kd to your PID controller
+}
+```
+
+## Features
+
+- Inflection point method: finds tuning in ~1/2 of the time constant
+- 5Tau method: full step response test
+- Supports direct and reverse action
+- Multiple output modes for debugging
+
+## License
+
+MIT License. Original work by David Lloyd.
 
 ### Inflection Point Tuning Method
 
@@ -75,27 +128,27 @@ sTune(float *input, float *output, TuningRule tuningRule, Action action, SerialM
 - `action` provides choices for controller action (direct or reverse) and whether to perform a fast inflection point test (IP) or a full 5 time constant test (5T). Choices are `directIP`, `direct5T`, `reverseIP` and `reverse5T`.
 - `serialMode` provides 6 choices for serial output.
 
-| Open Loop Tuning Methods | Autotune  Plot (using PWM output)                            | Description                                                  |
-| ------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| `ZN_PID`                 | [![Click to enlarge](https://user-images.githubusercontent.com/63488701/149276354-fcec7626-4f0a-4ce2-a8a2-078745a84dcd.png)](https://user-images.githubusercontent.com/63488701/149275791-a46f353a-3215-486c-a9ce-d96183897272.PNG) | Open Loop Ziegler-Nichols method with ¼ decay ratio          |
-| `DampedOsc_PID`          | [![Click to enlarge](https://user-images.githubusercontent.com/63488701/149277219-48534317-cf0f-44f0-a5be-12653b2f6e0c.png)](https://user-images.githubusercontent.com/63488701/149275509-68d12ba6-269a-4ce1-b8a7-36037518c49b.PNG) | Damped Oscillation method can solve marginal stability issues |
-| `NoOvershoot_PID`        | [![Click to enlarge](https://user-images.githubusercontent.com/63488701/149277649-7bdf4a72-4de6-41b2-9825-628d4d742423.png)](https://user-images.githubusercontent.com/63488701/149275728-4fca57f0-c975-4350-ab45-56d50b7c2cdf.PNG) | No Overshoot uses the C-H-R method (set point tracking) with 0% overshoot |
-| `CohenCoon_PID`          | [![Click to enlarge](https://user-images.githubusercontent.com/63488701/149278074-6a01584e-0c9b-44bf-b595-f436f653f220.png)](https://user-images.githubusercontent.com/63488701/149275398-69586823-0267-4834-8183-d383713f2d27.PNG) | Open loop Cohen Coon method approximates closed loop response with a ¼ decay ratio |
+| Open Loop Tuning Methods | Autotune  Plot (using PWM output)                                                                                                                                                                                                   | Description                                                                                          |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `ZN_PID`                 | [![Click to enlarge](https://user-images.githubusercontent.com/63488701/149276354-fcec7626-4f0a-4ce2-a8a2-078745a84dcd.png)](https://user-images.githubusercontent.com/63488701/149275791-a46f353a-3215-486c-a9ce-d96183897272.PNG) | Open Loop Ziegler-Nichols method with ¼ decay ratio                                                  |
+| `DampedOsc_PID`          | [![Click to enlarge](https://user-images.githubusercontent.com/63488701/149277219-48534317-cf0f-44f0-a5be-12653b2f6e0c.png)](https://user-images.githubusercontent.com/63488701/149275509-68d12ba6-269a-4ce1-b8a7-36037518c49b.PNG) | Damped Oscillation method can solve marginal stability issues                                        |
+| `NoOvershoot_PID`        | [![Click to enlarge](https://user-images.githubusercontent.com/63488701/149277649-7bdf4a72-4de6-41b2-9825-628d4d742423.png)](https://user-images.githubusercontent.com/63488701/149275728-4fca57f0-c975-4350-ab45-56d50b7c2cdf.PNG) | No Overshoot uses the C-H-R method (set point tracking) with 0% overshoot                            |
+| `CohenCoon_PID`          | [![Click to enlarge](https://user-images.githubusercontent.com/63488701/149278074-6a01584e-0c9b-44bf-b595-f436f653f220.png)](https://user-images.githubusercontent.com/63488701/149275398-69586823-0267-4834-8183-d383713f2d27.PNG) | Open loop Cohen Coon method approximates closed loop response with a ¼ decay ratio                   |
 | `Mixed_PID`              | [![Click to enlarge](https://user-images.githubusercontent.com/63488701/149278272-5057825c-5d92-4e69-9790-c90fd5235eaf.png)](https://user-images.githubusercontent.com/63488701/149275646-7aa0d8c9-397e-4bc5-8110-85b54a951c4f.PNG) | Mixed method averages the gains for `ZN_PID`, `DampedOsc_PID`, `NoOvershoot_PID` and `CohenCoon_PID` |
-| `ZN_PI`                  |                                                              | Open Loop Ziegler-Nichols method with ¼ decay ratio          |
-| `DampedOsc_PI`           |                                                              | Damped Oscillation method can solve marginal stability issues |
-| `NoOvershoot_PI`         |                                                              | No Overshoot uses the C-H-R method (set point tracking) with 0% overshoot |
-| `CohenCoon_PI`           |                                                              | Open loop Cohen Coon method approximates closed loop response with a ¼ decay ratio |
-| `Mixed_PI`               |                                                              | Mixed method averages the gains for `ZN_PI`, `DampedOsc_PI`, `NoOvershoot_PI` and `CohenCoon_PI` |
+| `ZN_PI`                  |                                                                                                                                                                                                                                     | Open Loop Ziegler-Nichols method with ¼ decay ratio                                                  |
+| `DampedOsc_PI`           |                                                                                                                                                                                                                                     | Damped Oscillation method can solve marginal stability issues                                        |
+| `NoOvershoot_PI`         |                                                                                                                                                                                                                                     | No Overshoot uses the C-H-R method (set point tracking) with 0% overshoot                            |
+| `CohenCoon_PI`           |                                                                                                                                                                                                                                     | Open loop Cohen Coon method approximates closed loop response with a ¼ decay ratio                   |
+| `Mixed_PI`               |                                                                                                                                                                                                                                     | Mixed method averages the gains for `ZN_PI`, `DampedOsc_PI`, `NoOvershoot_PI` and `CohenCoon_PI`     |
 
-| Serial Mode     | Description                                                  |
-| --------------- | ------------------------------------------------------------ |
-| `serialOFF`     | No serial output will occur.                                 |
-| `printALL`      | Prints test data while settling and during the test run. A summary of results is printed when testing completes. |
-| `printSUMMARY`  | A summary of results is printed when testing completes.      |
-| `printDEBUG`    | Same as `printALL`but includes printing diagnostic data during test run. |
+| Serial Mode     | Description                                                                                                                                                                                                                                                                                                                                                                                                             |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `serialOFF`     | No serial output will occur.                                                                                                                                                                                                                                                                                                                                                                                            |
+| `printALL`      | Prints test data while settling and during the test run. A summary of results is printed when testing completes.                                                                                                                                                                                                                                                                                                        |
+| `printSUMMARY`  | A summary of results is printed when testing completes.                                                                                                                                                                                                                                                                                                                                                                 |
+| `printDEBUG`    | Same as `printALL`but includes printing diagnostic data during test run.                                                                                                                                                                                                                                                                                                                                                |
 | `printPIDTUNER` | ➩  Prints test data in csv format compatible with [pidtuner.com](https://pidtuner.com). <br />➩  Requires the controller `action` being set to `direct5T` or `reverse5T`<br />➩  Just copy the serial printer data and import (paste) into PID Tuner for further<br />      analysis, model identification, fine PID tuning and experimentation. <br />➩  Note that `Kp`, `Ti` and `Td` is also provided for PID Tuner. |
-| `printPLOTTER`  | Plots `pvAvg` data for use with Serial Plotter.              |
+| `printPLOTTER`  | Plots `pvAvg` data for use with Serial Plotter.                                                                                                                                                                                                                                                                                                                                                                         |
 
 #### Instantiate sTune
 
@@ -165,4 +218,3 @@ float controllability = _Tu / _td + epsilon;
 - [Inflection point](https://en.wikipedia.org/wiki/Inflection_point)
 - [Time Constant (Re: Step response with arbitrary initial conditions)](https://en.wikipedia.org/wiki/Time_constant)
 - [Sample Time is a Fundamental Design and Tuning Specification](https://controlguru.com/sample-time-is-a-fundamental-design-and-tuning-specification/)
-

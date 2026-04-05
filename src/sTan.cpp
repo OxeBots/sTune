@@ -1,4 +1,4 @@
-#include "Arduino.h"
+#include <stdint.h>
 #include "sTan.h"
 
 void sTan::begin(uint16_t bufferSize) {
